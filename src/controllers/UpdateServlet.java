@@ -12,6 +12,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import models.Message;
 import utils.DBUtil;
+import models.validators.MessageValidator;
+import java.util.List;
+import javax.servlet.RequestDispatcher;
+
 
 /**
  * Servlet implementation class UpdateServlet
@@ -49,17 +53,32 @@ public class UpdateServlet extends HttpServlet {
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
             m.setUpdated_at(currentTime);       // 更新日時のみ上書き
 
-            // データベースを更新
-            em.getTransaction().begin();
-            em.getTransaction().commit();
-            request.getSession().setAttribute("flush", "更新が完了しました。");
-            em.close();
+         // バリデーションを実行してエラーがあったら編集画面のフォームに戻る
+            List<String> errors = MessageValidator.validate(m);
+            if(errors.size() > 0) {
+                em.close();
 
-            // セッションスコープ上の不要になったデータを削除
-            request.getSession().removeAttribute("message_id");
+                // フォームに初期値を設定、さらにエラーメッセージを送る
+                request.setAttribute("_token", request.getSession().getId());
+                request.setAttribute("message", m);
+                request.setAttribute("errors", errors);
 
-            // indexページへリダイレクト
-            response.sendRedirect(request.getContextPath() + "/index");
+                RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/messages/edit.jsp");
+                rd.forward(request, response);
+            } else {
+                // データベースを更新
+                em.getTransaction().begin();
+                em.getTransaction().commit();
+                request.getSession().setAttribute("flush", "更新が完了しました。");
+                em.close();
+
+                // セッションスコープ上の不要になったデータを削除
+                request.getSession().removeAttribute("message_id");
+
+                // indexページへリダイレクト
+                response.sendRedirect(request.getContextPath() + "/index");
+            }
+
         }
     }
 }
