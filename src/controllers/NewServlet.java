@@ -10,6 +10,8 @@ import java.sql.Timestamp;
 import javax.persistence.EntityManager;
 import models.Message;
 import utils.DBUtil;
+import javax.servlet.RequestDispatcher;
+
 
 /**
  * Servlet implementation class NewServlet
@@ -23,13 +25,22 @@ public class NewServlet extends HttpServlet {
      */
     public NewServlet() {
         super();
-        // TODO Auto-generated constructor stub
     }
 
     /**
      * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
      */
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // CSRF対策
+        request.setAttribute("_token", request.getSession().getId());
+
+        // おまじないとしてのインスタンスを生成
+        request.setAttribute("message", new Message());
+
+        RequestDispatcher rd = request.getRequestDispatcher("/WEB-INF/views/messages/new.jsp");
+        rd.forward(request, response);
+
+        /*
         EntityManager em = DBUtil.createEntityManager();
         em.getTransaction().begin();
 
@@ -55,6 +66,8 @@ public class NewServlet extends HttpServlet {
         response.getWriter().append(Integer.valueOf(m.getId()).toString());
 
         em.close();
+
+        */
     }
 
 }
